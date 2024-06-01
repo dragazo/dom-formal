@@ -133,32 +133,25 @@ Proof.
     induction t. all: intros; simpl. reflexivity.
     destruct (v1 =? v2) eqn:Ev12. rewrite Nat.eqb_eq in Ev12. rewrite Ev12 in H. rewrite adjacent_nrefl in H. discriminate H.
     destruct (v2 =? v3) eqn:Ev23. rewrite Nat.eqb_eq in Ev23. rewrite Ev23 in H0. rewrite adjacent_nrefl in H0. discriminate H0.
-    inversion H. inversion H0. clear H. clear H0.
+    inversion H. inversion H0. destruct (adjacent n t v1 v3) eqn:adj13.
 
-    destruct ((v1 =? S (S n)) && (v3 =? p)) eqn:E1. rewrite andb_true_iff in E1. destruct E1 as [E11 E12].
-    rewrite Nat.eqb_eq in E11. rewrite Nat.eqb_eq in E12.
-    rewrite <- E11 in H3. rewrite <- E12 in H3. rewrite Ev23 in H3. rewrite H1 in H3.
-    repeat rewrite andb_false_r in H3. simpl in H3.
-    apply adjacent_interior in H3. destruct H3 as [H31 H32]. rewrite E11 in H31.
-    rewrite nleb_S in H31. discriminate H31.
-
-    destruct ((v3 =? S (S n)) && (v1 =? p)) eqn:E2. rewrite andb_true_iff in E2. destruct E2 as [E21 E22].
-    rewrite Nat.eqb_eq in E21. rewrite Nat.eqb_eq in E22.
-    rewrite <- E21 in H4. rewrite <- E22 in H4. rewrite (Nat.eqb_sym v2 v1) in H4. rewrite Ev23 in H4. rewrite Ev12 in H4.
-    rewrite andb_false_r in H4. simpl in H4.
-    apply adjacent_interior in H4. destruct H4 as [H41 H42]. rewrite E21 in H42.
-    rewrite nleb_S in H42. discriminate H42.
-
-    simpl. destruct (adjacent n t v1 v3) eqn:adj13. all: try reflexivity.
     destruct (adjacent n t v1 v2) eqn:adj12. clear H3.
     rewrite adjacent_sym in adj12. rewrite (IHt v2 v1 v3 adj12 adj13 Ev23) in H4. rename H4 into H3.
-    all: rewrite orb_false_r in H3; rewrite orb_true_iff in H3; repeat rewrite andb_true_iff in H3; destruct H3 as [[H31 H32]|[H31 H32]]; rewrite Nat.eqb_eq in H31; rewrite Nat.eqb_eq in H32.
-    apply adjacent_interior in adj12. destruct adj12 as [adj12 _]. rewrite H31 in adj12. rewrite nleb_S in adj12. discriminate adj12.
-    apply adjacent_interior in adj13. destruct adj13 as [_ adj13]. rewrite H31 in adj13. rewrite nleb_S in adj13. discriminate adj13.
-    apply adjacent_interior in adj13. destruct adj13 as [adj13 _]. rewrite H31 in adj13. rewrite nleb_S in adj13. discriminate adj13.
-    rewrite <- H31 in H4. rewrite <- H32 in H4. rewrite (Nat.eqb_sym v3 v1) in H4. rewrite (Nat.eqb_sym v2 v1) in H4.
-    rewrite H1 in H4. rewrite Ev12 in H4. repeat rewrite andb_false_r in H4. simpl in H4.
-    apply adjacent_interior in H4. destruct H4 as [H4 _]. rewrite H31 in H4. rewrite nleb_S in H4. discriminate H4.
+    all: try (rewrite orb_false_r in H3; rewrite orb_true_iff in H3; repeat rewrite andb_true_iff in H3; repeat rewrite Nat.eqb_eq in H3; destruct H3 as [[H31 H32]|[H31 H32]]).
+    destruct (adjacent_interior n t v2 v1 adj12) as [E1 E2]. rewrite H31 in E1. rewrite nleb_S in E1. discriminate E1.
+    destruct (adjacent_interior n t v1 v3 adj13) as [E1 E2]. rewrite H31 in E2. rewrite nleb_S in E2. discriminate E2.
+    destruct (adjacent_interior n t v1 v3 adj13) as [E1 E2]. rewrite H31 in E1. rewrite nleb_S in E1. discriminate E1.
+    rewrite <- H32 in H4. rewrite (Nat.eqb_sym v3 v1) in H4. rewrite H1 in H4. rewrite (Nat.eqb_sym v2 v1) in H4. rewrite Ev12 in H4. repeat rewrite andb_false_r in H4. simpl in H4.
+    destruct (adjacent_interior n t v2 v3 H4) as [E1 E2]. rewrite H31 in E1. rewrite nleb_S in E1. discriminate E1.
+
+    destruct ((v1 =? S (S n)) && (v3 =? p) || (v3 =? S (S n)) && (v1 =? p)) eqn:E.
+    rewrite orb_true_iff in E. repeat rewrite andb_true_iff in E. repeat rewrite Nat.eqb_eq in E.
+    destruct E as [[E1 E2]|[E1 E2]]; rewrite <- E1 in H3; rewrite <- E1 in H4; rewrite <- E2 in H3; rewrite <- E2 in H4;
+    rewrite Ev23 in H3; rewrite H1 in H3; rewrite Ev23 in H4; rewrite Nat.eqb_sym in Ev12; rewrite Ev12 in H4;
+    repeat rewrite andb_false_r in H3; repeat rewrite andb_false_r in H4; simpl in H3; simpl in H4.
+    destruct (adjacent_interior n t v1 v2 H3) as [G1 G2]. rewrite E1 in G1. rewrite nleb_S in G1. discriminate G1.
+    destruct (adjacent_interior n t v2 v3 H4) as [G1 G2]. rewrite E1 in G2. rewrite nleb_S in G2. discriminate G2.
+    reflexivity.
 Qed.
 
 (* ------------------------ *)

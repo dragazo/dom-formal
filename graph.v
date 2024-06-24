@@ -1,117 +1,126 @@
-Require Import Arith.
-Require Import Bool.
-Require Import List.
-Import ListNotations.
+(* ------------------------------------------------------------------------------------ *)
+
+Axiom excl_mid : forall (p : Prop), p \/ ~p.
+Axiom func_ext : forall (X Y : Type) (f g : X -> Y), (forall (x : X), f x = g x) -> f = g.
+Axiom prop_ext : forall (P Q : Prop), (P <-> Q) -> P = Q.
 
 (* ------------------------------------------------------------------------------------ *)
 
-Record ssetoid := {
-    T : Type;
-    T_eqb : T -> T -> bool;
-    T_eqb_eq : forall (a b : T), T_eqb a b = true <-> a = b;
-}.
+Definition universe {X : Type} : X -> Prop := fun (x : X) => True.
+Definition empty {X : Type} : X -> Prop := fun (x : X) => False.
 
-Fixpoint filter {X : ssetoid} (f : T X -> bool) (l : list (T X)) : list (T X) := match l with
-    | nil => nil
-    | h :: t => if f h then h :: (filter f t) else (filter f t)
-end.
+Definition single {X : Type} (x : X) : X -> Prop := fun (y : X) => x = y.
 
-Fixpoint contains {X : ssetoid} (l : list (T X)) (v : T X) : bool := match l with
-    | nil => false
-    | h :: t => if T_eqb X h v then true else contains t v
-end.
+Definition subset {X : Type} (a b : X -> Prop) : Prop := forall (x : X), a x -> b x.
 
-Fixpoint distinct {X : ssetoid} (l : list (T X)) : bool := match l with
-    | nil => true
-    | h :: t => (negb (contains t h)) && distinct t
+Definition cap {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x /\ b x.
+Definition cup {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x \/ b x.
+Definition sub {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x /\ ~(b x).
+Definition sym {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => (a x /\ ~(b x)) \/ (~(a x) /\ b x).
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem subset_refl : forall (X : Type) (a : X -> Prop), subset a a.
+Proof. firstorder. Qed.
+
+Theorem subset_antisym : forall (X : Type) (a b : X -> Prop), subset a b -> subset b a -> a = b.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem subset_trans : forall (X : Type) (a b c : X -> Prop), subset a b -> subset b c -> subset a c.
+Proof. firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem cap_self : forall (X : Type) (a : X -> Prop), cap a a = a.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cap_comm : forall (X : Type) (a b : X -> Prop), cap a b = cap b a.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cap_assoc : forall (X : Type) (a b c : X -> Prop), cap a (cap b c) = cap (cap a b) c.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cap_subset_l : forall (X : Type) (a b : X -> Prop), subset (cap a b) a.
+Proof. firstorder. Qed.
+
+Theorem cap_subset_r : forall (X : Type) (a b : X -> Prop), subset (cap a b) b.
+Proof. firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem cup_self : forall (X : Type) (a : X -> Prop), cup a a = a.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cup_comm : forall (X : Type) (a b : X -> Prop), cup a b = cup b a.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cup_assoc : forall (X : Type) (a b c : X -> Prop), cup a (cup b c) = cup (cup a b) c.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem cup_subset_l : forall (X : Type) (a b : X -> Prop), subset a (cup a b).
+Proof. firstorder. Qed.
+
+Theorem cup_subset_r : forall (X : Type) (a b : X -> Prop), subset b (cup a b).
+Proof. firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem sub_self : forall (X : Type) (a : X -> Prop), sub a a = empty.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem sub_subset : forall (X : Type) (a b : X -> Prop), subset (sub a b) a.
+Proof. firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem sym_self : forall (X : Type) (a : X -> Prop), sym a a = empty.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+Theorem sym_comm : forall (X : Type) (a b : X -> Prop), sym a b = sym b a.
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Fixpoint card_ge {X : Type} (a : X -> Prop) (k : nat) : Prop := match k with
+    | 0 => True
+    | S k' => exists (x : X), a x /\ card_ge (sub a (single x)) k'
 end.
 
 (* ------------------------------------------------------------------------------------ *)
 
-Theorem filter_predicate : forall (X : ssetoid) (l : list (T X)) (f : T X -> bool) (v : T X),
-    contains (filter f l) v = true -> f v = true.
+Theorem card_subset : forall (X : Type) (a b : X -> Prop) (k : nat), subset a b -> card_ge a k -> card_ge b k.
 Proof.
-    intros. induction l. all: simpl in H. discriminate H. destruct (f a) eqn:Ef.
-    simpl in H. destruct (T_eqb X a v) eqn:Q. apply (T_eqb_eq X) in Q. rewrite <- Q. exact Ef. all: exact (IHl H).
+    intros. generalize dependent a. generalize dependent b. induction k. reflexivity. intros.
+    destruct H0 as [x [H1 H2]]. exists x. split. exact (H x H1). firstorder.
 Qed.
-
-Theorem filter_subset : forall (X : ssetoid) (l : list (T X)) (f : T X -> bool) (v : T X),
-    contains (filter f l) v = true -> contains l v = true.
-Proof.
-    intros. induction l. simpl in H. discriminate H. simpl. destruct (T_eqb X a v) eqn:Tav. reflexivity. apply IHl.
-    simpl in H. destruct (f a) eqn:Efa. simpl in H. rewrite Tav in H. all: exact H.
-Qed.
-
-Theorem distinct_subset : forall (X : ssetoid) (l : list (T X)) (f : T X -> bool),
-    distinct l = true -> distinct (filter f l) = true.
-Proof.
-    intros. unfold distinct. destruct (filter f l) eqn:fl. reflexivity. rewrite andb_true_iff. split.
-
-    intros. induction l. reflexivity. simpl in H. rewrite andb_true_iff in H. destruct H as [H1 H2]. apply IHl in H2. clear IHl.
-    simpl. destruct (f a) eqn:fa. simpl. rewrite andb_true_iff. split. all: try exact H2.
-    
-    
-
-
-    induction l. reflexivity. intros. simpl. destruct (f a) eqn:fa. simpl. rewrite Bool.andb_true_iff. split.
-
-    
-    intros. induction l. reflexivity. simpl. destruct (f a) eqn:fa. simpl.
-
-(* ------------------------------------------------------------------------------------ *)
-
-
-Theorem distinct_filter : forall (X : Type) (eqb : X -> X -> bool)
-
-Definition intersect {X : Type} (eqb : X -> X -> bool) (a b : list X) : list X := filter (contains eqb b) a.
-
-Theorem intersect_refl : forall (X : Type) (eqb : X -> X -> bool) (a : list X), intersect eqb a a = a.
-Proof.
-    intros. unfold intersect.
-
-Theorem intersect_contains : forall (X : Type) (eqb : X -> X -> bool) (a b : list X),
-    contains eqb (intersect 
-
-Definition bxor (p q : bool) := match p, q with
-    | true, true => false
-    | false, false => false
-    | true, false => true
-    | false, true => true
-end.
 
 (* ------------------------------------------------------------------------------------ *)
 
 Record graph := {
     V : Type;
-    V_eqb : V -> V -> bool;
-    V_eqb_eq : forall (u v : V), V_eqb u v = true <-> u = v;
-
-    E : V -> V -> bool;
-    E_nrefl : forall (v : V), E v v = false;
-    E_sym : forall (u v : V), E u v = E v u;
-
-    N_open : V -> list V;
-    N_open_distinct : forall (v : V), distinct V_eqb (N_open v) = true;
-    N_open_adj : forall (u v : V), contains V_eqb (N_open v) u = true -> E u v = true;
+    E : V -> V -> Prop;
+    E_nrefl : forall (v : V), ~ E v v;
+    E_sym : forall (u v : V), E u v <-> E v u;
 }.
 
-Definition N_closed (G : graph) (v : V G) := v :: N_open G v.
-
-Theorem N_open_nrefl : forall (G : graph) (v : V G), contains (V_eqb G) (N_open G v) v = false.
-Proof.
-    intros. destruct (contains (V_eqb G) (N_open G v) v) eqn:H. all: try reflexivity.
-    apply (N_open_adj G v v) in H. remember (E_nrefl G v). rewrite e in H. discriminate H.
-Qed.
-
-Theorem adj_neq : forall (G : graph) (u v : V G), E G u v = true -> u <> v.
-Proof.
-    unfold not. intros. rewrite H0 in H. remember (E_nrefl G v). rewrite e in H. discriminate H.
-Qed.
+Definition No {G : graph} (v : V G) := E G v.
+Definition Nc {G : graph} (v : V G) := cup (No v) (single v).
 
 (* ------------------------------------------------------------------------------------ *)
 
-Definition k_closed_dom (G : graph) (D : V G -> bool) (k : nat) :=
-    forall (v : V G), length (filter D (N_closed G v)) <? k = false.
+Definition open_dominated {G : graph} (k : nat) (D : V G -> Prop) (v : V G) := card_ge (cap (No v) D) k.
+Definition closed_dominated {G : graph} (k : nat) (D : V G -> Prop) (v : V G) := card_ge (cap (Nc v) D) k.
 
-Definition k_closed_disty (G : graph) (D : V G -> bool) (k : nat) :=
-    forall (u v : V G), u <> v -> filter (fun x => D x && (contains (V_eqb G) N_
+Definition open_dominating {G : graph} (k : nat) (D : V G -> Prop) := forall (v : V G), open_dominated  k D v.
+Definition closed_dominating {G : graph} (k : nat) (D : V G -> Prop) := forall (v : V G), closed_dominated  k D v.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Definition open_distingished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) := card_ge (cap (sym (No u) (No v)) D) k.
+Definition closed_distingished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) := card_ge (cap (sym (Nc u) (Nc v)) D) k.
+
+Definition open_distinguishing {G : graph} (k : nat) (D : V G -> Prop) := forall (u v : V G), open_distingished k D u v.
+Definition closed_distinguishing {G : graph} (k : nat) (D : V G -> Prop) := forall (u v : V G), closed_distingished k D u v.
+
+(* ------------------------------------------------------------------------------------ *)
+

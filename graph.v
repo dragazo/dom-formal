@@ -86,6 +86,8 @@ Fixpoint card_ge {X : Type} (a : X -> Prop) (k : nat) : Prop := match k with
     | S k' => exists (x : X), a x /\ card_ge (sub a (single x)) k'
 end.
 
+Definition card_eq {X : Type} (a : X -> Prop) (k : nat) : Prop := card_ge a k /\ ~ card_ge a (S k).
+
 (* ------------------------------------------------------------------------------------ *)
 
 Theorem card_subset : forall (X : Type) (a b : X -> Prop) (k : nat), subset a b -> card_ge a k -> card_ge b k.
@@ -123,17 +125,15 @@ Definition closed_dominating {G : graph} (k : nat) (D : V G -> Prop) :=
 Theorem open_dominating_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
     subset D D' -> open_dominating k D -> open_dominating k D'.
 Proof.
-    unfold open_dominating, open_dominated. induction k. trivial. intros. simpl. simpl in H0.
-    destruct (H0 v) as [u [[H1 H2] H3]]. exists u. split. firstorder.
-    apply card_subset with (a := (sub (cap (No v) D) (single u))). firstorder. exact H3.
+    unfold open_dominating, open_dominated. intros.
+    apply card_subset with (a := (cap (No v) D)); firstorder.
 Qed.
 
 Theorem closed_dominating_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
     subset D D' -> closed_dominating k D -> closed_dominating k D'.
 Proof.
-    unfold closed_dominating, closed_dominated. induction k. trivial. intros. simpl. simpl in H0.
-    destruct (H0 v) as [u [[H1 H2] H3]]. exists u. split. firstorder.
-    apply card_subset with (a := (sub (cap (Nc v) D) (single u))). firstorder. exact H3.
+    unfold closed_dominating, closed_dominated. intros.
+    apply card_subset with (a := (cap (Nc v) D)); firstorder.
 Qed.
 
 (* ------------------------------------------------------------------------------------ *)
@@ -157,17 +157,15 @@ Definition self_distinguishing {G : graph} (k : nat) (D : V G -> Prop) :=
 Theorem open_distinguishing_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
     subset D D' -> open_distinguishing k D -> open_distinguishing k D'.
 Proof.
-    unfold open_distinguishing, open_distinguished. induction k. trivial. intros. simpl. simpl in H0.
-    destruct (H0 u v H1) as [w [[H2 H3] H4]]. exists w. split. firstorder.
-    apply card_subset with (a := (sub (cap (sym (No u) (No v)) D) (single w))). firstorder. exact H4.
+    unfold open_distinguishing, open_distinguished. intros.
+    apply card_subset with (a := (cap (sym (No u) (No v)) D)); firstorder.
 Qed.
 
 Theorem closed_distinguishing_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
     subset D D' -> closed_distinguishing k D -> closed_distinguishing k D'.
 Proof.
-    unfold closed_distinguishing, closed_distinguished. induction k. trivial. intros. simpl. simpl in H0.
-    destruct (H0 u v H1) as [w [[H2 H3] H4]]. exists w. split. firstorder.
-    apply card_subset with (a := (sub (cap (sym (Nc u) (Nc v)) D) (single w))). firstorder. exact H4.
+    unfold closed_distinguishing, closed_distinguished. intros.
+    apply card_subset with (a := (cap (sym (Nc u) (Nc v)) D)); firstorder.
 Qed.
 
 (* ------------------------------------------------------------------------------------ *)

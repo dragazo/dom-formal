@@ -201,10 +201,9 @@ Proof.
     unfold sharp_open_distinguished.
 
     rewrite sym_sub in A. rewrite sym_sub in B. rewrite sym_sub in C.
-    destruct B as [B B'].
+    destruct A as [[A | A] Da], B as [[[B | B] Db] Uab], C as [[[[C | C] Dc] Uac] Ubc].
+    (* all: firstorder.
 
-
-    destruct A as [[A | A] A'], B as [B B'].
-
-
-    (* make the above things more general - like add a general 3 sym -> 2 sharp *)
+    left. firstorder. left. firstorder. left. firstorder. right. firstorder.
+    left. firstorder. right. firstorder. right. firstorder. right. firstorder.
+Qed. *)

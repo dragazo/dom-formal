@@ -195,15 +195,10 @@ Qed.
 
 Theorem errold_is_detold : forall (G : graph) (D : V G -> Prop), errold D -> detold D.
 Proof.
-    unfold errold, detold, open_distinguishing, sharp_open_distinguishing.
-    intros. destruct H as [H1 H2]. split. firstorder. intros. apply (H2 u v) in H.
-    destruct H as [a [A H]]. destruct H as [b [B H]]. destruct H as [c [C H]]. clear H.
-    unfold sharp_open_distinguished.
-
+    unfold errold, detold, open_distinguishing, sharp_open_distinguishing, sharp_open_distinguished.
+    intros. destruct H as [H1 H2]. split. firstorder. intros. apply (H2 u v) in H. clear H1. clear H2.
+    destruct H as [a [A H]]. destruct H as [b [B H]]. destruct H as [c [C _]].
     rewrite sym_sub in A. rewrite sym_sub in B. rewrite sym_sub in C.
     destruct A as [[A | A] Da], B as [[[B | B] Db] Uab], C as [[[[C | C] Dc] Uac] Ubc].
-    (* all: firstorder.
-
-    left. firstorder. left. firstorder. left. firstorder. right. firstorder.
-    left. firstorder. right. firstorder. right. firstorder. right. firstorder.
-Qed. *)
+    all: firstorder.
+Qed.

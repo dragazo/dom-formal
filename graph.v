@@ -16,7 +16,7 @@ Definition subset {X : Type} (a b : X -> Prop) : Prop := forall (x : X), a x -> 
 Definition cap {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x /\ b x.
 Definition cup {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x \/ b x.
 Definition sub {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => a x /\ ~(b x).
-Definition sym {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => (a x /\ ~(b x)) \/ (~(a x) /\ b x).
+Definition sym {X : Type} (a b : X -> Prop) : X -> Prop := fun (x : X) => (a x /\ ~ b x) \/ (b x /\ ~ a x).
 
 (* ------------------------------------------------------------------------------------ *)
 
@@ -79,6 +79,9 @@ Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
 Theorem sym_comm : forall (X : Type) (a b : X -> Prop), sym a b = sym b a.
 Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
 
+Theorem sym_sub : forall (X : Type) (a b : X -> Prop), sym a b = cup (sub a b) (sub b a).
+Proof. intros. apply func_ext. intros. apply prop_ext. firstorder. Qed.
+
 (* ------------------------------------------------------------------------------------ *)
 
 Fixpoint card_ge {X : Type} (a : X -> Prop) (k : nat) : Prop := match k with
@@ -86,7 +89,9 @@ Fixpoint card_ge {X : Type} (a : X -> Prop) (k : nat) : Prop := match k with
     | S k' => exists (x : X), a x /\ card_ge (sub a (single x)) k'
 end.
 
-Definition card_eq {X : Type} (a : X -> Prop) (k : nat) : Prop := card_ge a k /\ ~ card_ge a (S k).
+Definition card_le {X : Type} (a : X -> Prop) (k : nat) : Prop := ~ card_ge a (S k).
+
+Definition card_eq {X : Type} (a : X -> Prop) (k : nat) : Prop := card_ge a k /\ card_le a k.
 
 (* ------------------------------------------------------------------------------------ *)
 
@@ -95,6 +100,9 @@ Proof.
     intros. generalize dependent a. generalize dependent b. induction k. reflexivity. intros.
     destruct H0 as [x [H1 H2]]. exists x. split. exact (H x H1). firstorder.
 Qed.
+
+Theorem card_ge_S : forall (X : Type) (a b : X -> Prop) (k : nat), card_ge a (S k) -> card_ge a k.
+Proof. intros. destruct H as [x [H1 H2]]. apply card_subset with (a := (sub a (single x))); firstorder. Qed.
 
 (* ------------------------------------------------------------------------------------ *)
 
@@ -122,22 +130,6 @@ Definition closed_dominating {G : graph} (k : nat) (D : V G -> Prop) :=
 
 (* ------------------------------------------------------------------------------------ *)
 
-Theorem open_dominating_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
-    subset D D' -> open_dominating k D -> open_dominating k D'.
-Proof.
-    unfold open_dominating, open_dominated. intros.
-    apply card_subset with (a := (cap (No v) D)); firstorder.
-Qed.
-
-Theorem closed_dominating_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
-    subset D D' -> closed_dominating k D -> closed_dominating k D'.
-Proof.
-    unfold closed_dominating, closed_dominated. intros.
-    apply card_subset with (a := (cap (Nc v) D)); firstorder.
-Qed.
-
-(* ------------------------------------------------------------------------------------ *)
-
 Definition open_distinguished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) :=
     card_ge (cap (sym (No u) (No v)) D) k.
 Definition closed_distinguished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) :=
@@ -154,43 +146,65 @@ Definition self_distinguishing {G : graph} (k : nat) (D : V G -> Prop) :=
 
 (* ------------------------------------------------------------------------------------ *)
 
-Theorem open_distinguishing_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
-    subset D D' -> open_distinguishing k D -> open_distinguishing k D'.
-Proof.
-    unfold open_distinguishing, open_distinguished. intros.
-    apply card_subset with (a := (cap (sym (No u) (No v)) D)); firstorder.
-Qed.
-
-Theorem closed_distinguishing_subset : forall (G : graph) (k : nat) (D D' : V G -> Prop),
-    subset D D' -> closed_distinguishing k D -> closed_distinguishing k D'.
-Proof.
-    unfold closed_distinguishing, closed_distinguished. intros.
-    apply card_subset with (a := (cap (sym (Nc u) (Nc v)) D)); firstorder.
-Qed.
-
-(* ------------------------------------------------------------------------------------ *)
-
 Definition sharp_open_distinguished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) :=
     card_ge (cap (sub (No u) (No v)) D) k \/ card_ge (cap (sub (No v) (No u)) D) k.
 Definition sharp_closed_distinguished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) :=
     card_ge (cap (sub (Nc u) (Nc v)) D) k \/ card_ge (cap (sub (Nc v) (Nc u)) D) k.
+Definition sharp_self_distinguished {G : graph} (k : nat) (D : V G -> Prop) (u v : V G) :=
+    card_ge (cap (cup (sub (No u) (No v)) (single u)) D) k \/ card_ge (cap (cup (sub (No v) (No u)) (single v)) D) k.
 
 Definition sharp_open_distinguishing {G : graph} (k : nat) (D : V G -> Prop) :=
     forall (u v : V G), u <> v -> sharp_open_distinguished k D u v.
 Definition sharp_closed_distinguishing {G : graph} (k : nat) (D : V G -> Prop) :=
     forall (u v : V G), u <> v -> sharp_closed_distinguished k D u v.
+Definition sharp_self_distinguishing {G : graph} (k : nat) (D : V G -> Prop) :=
+    forall (u v : V G), u <> v -> sharp_self_distinguished k D u v.
 
 (* ------------------------------------------------------------------------------------ *)
 
+Definition odom {G : graph} (D : V G -> Prop) := open_dominating 1 D.
+Definition old {G : graph} (D : V G -> Prop) := open_dominating 1 D /\ open_distinguishing 1 D.
+Definition redold {G : graph} (D : V G -> Prop) := open_dominating 2 D /\ open_distinguishing 2 D.
+Definition detold {G : graph} (D : V G -> Prop) := open_dominating 2 D /\ sharp_open_distinguishing 2 D.
+Definition errold {G : graph} (D : V G -> Prop) := open_dominating 3 D /\ open_distinguishing 3 D.
 
+Definition dom {G : graph} (D : V G -> Prop) := closed_dominating 1 D.
+Definition ic {G : graph} (D : V G -> Prop) := closed_dominating 1 D /\ closed_distinguishing 1 D.
+Definition redic {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ closed_distinguishing 2 D.
+Definition detic {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ sharp_closed_distinguishing 2 D.
+Definition erric {G : graph} (D : V G -> Prop) := closed_dominating 3 D /\ closed_distinguishing 3 D.
+
+Definition ld {G : graph} (D : V G -> Prop) := closed_dominating 1 D /\ self_distinguishing 1 D.
+Definition redld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ self_distinguishing 2 D.
+Definition detld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ sharp_self_distinguishing 2 D.
+Definition errld {G : graph} (D : V G -> Prop) := closed_dominating 3 D /\ self_distinguishing 3 D.
 
 (* ------------------------------------------------------------------------------------ *)
 
-Definition dominating_set {G : graph} (D : V G -> Prop) :=
-    closed_dominating 1 D.
-Definition identifying_code {G : graph} (D : V G -> Prop) :=
-    closed_dominating 1 D /\ closed_distinguishing 1 D.
-Definition redundant_identifying_code {G : graph} (D : V G -> Prop) :=
-    closed_dominating 2 D /\ closed_distinguishing 2 D.
-Definition error_detecting_identifying_code {G : graph} (D : V G -> Prop) :=
-    closed_dominating 2 D /\ sharp_closed_distinguishing 2 D.
+Theorem old_is_odom : forall (G : graph) (D : V G -> Prop), old D -> odom D.
+Proof. firstorder. Qed.
+
+Theorem redold_is_old : forall (G : graph) (D : V G -> Prop), redold D -> old D.
+Proof. firstorder. Qed.
+
+Theorem detold_is_redold : forall (G : graph) (D : V G -> Prop), detold D -> redold D.
+Proof.
+    unfold detold, redold, sharp_open_distinguishing, open_distinguishing.
+    intros. destruct H as [H1 H2]. split. exact H1. intros. apply (H2 u v) in H. firstorder.
+Qed.
+
+Theorem errold_is_detold : forall (G : graph) (D : V G -> Prop), errold D -> detold D.
+Proof.
+    unfold errold, detold, open_distinguishing, sharp_open_distinguishing.
+    intros. destruct H as [H1 H2]. split. firstorder. intros. apply (H2 u v) in H.
+    destruct H as [a [A H]]. destruct H as [b [B H]]. destruct H as [c [C H]]. clear H.
+    unfold sharp_open_distinguished.
+
+    rewrite sym_sub in A. rewrite sym_sub in B. rewrite sym_sub in C.
+    destruct B as [B B'].
+
+
+    destruct A as [[A | A] A'], B as [B B'].
+
+
+    (* make the above things more general - like add a general 3 sym -> 2 sharp *)

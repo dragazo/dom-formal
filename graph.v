@@ -116,6 +116,9 @@ Record graph := {
 Definition No {G : graph} (v : V G) := E G v.
 Definition Nc {G : graph} (v : V G) := cup (No v) (single v).
 
+Definition min_deg (G : graph) (k : nat) : Prop := forall (v : V G), card_ge (No v) k.
+Definition max_deg (G : graph) (k : nat) : Prop := forall (v : V G), card_le (No v) k.
+
 (* ------------------------------------------------------------------------------------ *)
 
 Definition open_dominated {G : graph} (k : nat) (D : V G -> Prop) (v : V G) :=
@@ -228,4 +231,34 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------------------------ *)
+
+Theorem ld_is_dom : forall (G : graph) (D : V G -> Prop), ld D -> dom D.
+Proof. unfold ld, dom. intros. destruct H as [H _]. exact H. Qed.
+
+Theorem redld_is_ld : forall (G : graph) (D : V G -> Prop), redld D -> ld D.
+Proof. unfold redld, ld. intros. destruct H as [H1 H2]. split. clear H2. firstorder. clear H1. firstorder. Qed.
+
+Theorem detld_is_redld : forall (G : graph) (D : V G -> Prop), detld D -> redld D.
+Proof.
+    unfold detld, redld, sharp_self_distinguishing, self_distinguishing.
+    intros. destruct H as [H1 H2]. split. exact H1. clear H1. intros. apply (H2 u v) in H. clear H2. firstorder.
+Qed.
+
+Theorem errld_is_detld : forall (G : graph) (D : V G -> Prop), errld D -> detld D.
+Proof.
+    unfold errld, detld, self_distinguishing, sharp_self_distinguishing, sharp_self_distinguished.
+    intros. destruct H as [H1 H2]. split. clear H2. firstorder. clear H1. intros. apply (H2 u v) in H. clear H2.
+    destruct H as [a [A H]]. destruct H as [b [B H]]. destruct H as [c [C _]].
+    rewrite sym_sub in A. rewrite sym_sub in B. rewrite sym_sub in C.
+    destruct A as [[A | A] Da], B as [[[B | B] Db] Uab], C as [[[[C | C] Dc] Uac] Ubc].
+    all: firstorder.
+Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
+Theorem old_is_ld : forall (G : graph) (D : V G -> Prop), old D -> ld D.
+Proof. unfold old, ld. intros. destruct H as [H1 H2]. split. clear H2. firstorder. clear H1. firstorder. Qed.
+
+Theorem ic_is_ld : forall (G : graph) (D : V G -> Prop), ic D -> ld D.
+Proof. unfold ic, ld. intros. destruct H as [H1 H2]. split. exact H1. clear H1. firstorder. Qed.
 

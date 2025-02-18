@@ -6,6 +6,11 @@ Axiom prop_ext : forall (P Q : Prop), (P <-> Q) -> P = Q.
 
 (* ------------------------------------------------------------------------------------ *)
 
+Theorem demorgan : forall (p q : Prop), ~(p /\ q) <-> (~p \/ ~q).
+Proof. intros. destruct (excl_mid p), (excl_mid q); firstorder. Qed.
+
+(* ------------------------------------------------------------------------------------ *)
+
 Definition universe {X : Type} : X -> Prop := fun (x : X) => True.
 Definition empty {X : Type} : X -> Prop := fun (x : X) => False.
 
@@ -267,9 +272,20 @@ Proof. unfold ic, ld. intros. destruct H as [H1 H2]. split. exact H1. clear H1. 
 Definition previous_ld {G : graph} (D : V G -> Prop) :=
     forall (v : V G), ~(D v) -> card_ge (cap (No v) D) 1 /\
     forall (u v : V G), u <> v -> ~(D u) -> ~(D v) -> card_ge (sym (cap (No v) D) (cap (No u) D)) 1.
-Definition previous_redld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ self_distinguishing 2 D.
-Definition previous_detld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ sharp_self_distinguishing 2 D.
-Definition previous_errld {G : graph} (D : V G -> Prop) := closed_dominating 3 D /\ self_distinguishing 3 D.
+Definition previous_redld {G : graph} (D : V G -> Prop) :=
+    forall (v : V G), card_ge (cap (Nc v) D) 2 /\
+    forall (u v : V G), u <> v -> D v -> ~(D u) -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (single v)) 1 /\
+    forall (u v : V G), u <> v -> ~(D v) -> ~(D u) -> card_ge (sym (cap (No v) D) (cap (No u) D)) 2.
+Definition previous_detld {G : graph} (D : V G -> Prop) :=
+    forall (v : V G), card_ge (cap (Nc v) D) 2 /\
+    forall (u v : V G), u <> v -> D u -> D v -> card_ge (sym (cap (No v) D) (cap (No u) D)) 1 /\
+    forall (u v : V G), u <> v -> D u -> ~(D v) -> (card_ge (sub (cap (No v) D) (cap (No u) D)) 2 \/ card_ge (sub (cap (No u) D) (cap (No v) D)) 1) /\
+    forall (u v : V G), u <> v -> ~(D u) -> ~(D v) -> (card_ge (sub (cap (No v) D) (cap (No u) D)) 2 \/ card_ge (sub (cap (No u) D) (cap (No v) D)) 2).
+Definition previous_errld {G : graph} (D : V G -> Prop) :=
+    forall (v : V G), card_ge (cap (Nc v) D) 3 /\
+    forall (u v : V G), u <> v -> D u -> D v -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (cup (single v) (single u))) 1 /\
+    forall (u v : V G), u <> v -> D u -> D v -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (single u)) 2 /\
+    forall (u v : V G), u <> v -> D u -> D v -> card_ge (sym (cap (No v) D) (cap (No u) D)) 3.
 
 Theorem previous_ld_equiv : forall (G : graph) (D : V G -> Prop), ld D <-> previous_ld D.
 Proof.
@@ -279,3 +295,20 @@ Proof.
     unfold closed_dominating. intros. remember (H v) as H1. clear HeqH1. clear H. destruct (excl_mid (D v)); firstorder.
     unfold self_distinguishing. intros. destruct (excl_mid (D u)), (excl_mid (D v)); firstorder. destruct (H v H2) as [_ H3]. clear H. firstorder.
 Qed.
+
+Theorem previous_redld_equiv : forall (G : graph) (D : V G -> Prop), redld D <-> previous_redld D.
+Proof.
+    unfold redld, previous_redld. repeat (split; intros).
+
+    destruct H as [H _]. firstorder.
+
+    destruct H as [_ H]. destruct (H u v0 H0) as [x [[H3 H4] [y [[[H5 H6] H7] _]]]]. clear H. unfold single in H7.
+    destruct (excl_mid (v0 = x /\ v0 = y)) as [[H8 H9] | H8]. rewrite <- H8 in H7. rewrite <- H9 in H7. firstorder.
+    apply demorgan in H8. destruct H8 as [H8 | H8]; [exists x | exists y]; split; try reflexivity. split; try exact H8.
+    destruct (excl_mid (x = u)) as [H9 | H9]. rewrite H9 in H4. firstorder. destruct H3 as [H3 | [H3 | H3]]; [| apply eq_sym in H3 |]; firstorder.
+    destruct (excl_mid (y = u)) as [H9 | H9]. rewrite H9 in H6. firstorder. destruct H5 as [H5 | [H5 | H5]]; [| apply eq_sym in H5 |]; firstorder.
+
+    destruct H as [_ H]. destruct (H u0 v1 H3) as [x [[H6 H7] [y [[[H8 H9] H10] _]]]]. clear H. unfold single in H10.
+    exists x; split; [| exists y; split; try reflexivity].
+    
+

@@ -262,3 +262,20 @@ Proof. unfold old, ld. intros. destruct H as [H1 H2]. split. clear H2. firstorde
 Theorem ic_is_ld : forall (G : graph) (D : V G -> Prop), ic D -> ld D.
 Proof. unfold ic, ld. intros. destruct H as [H1 H2]. split. exact H1. clear H1. firstorder. Qed.
 
+(* ------------------------------------------------------------------------------------ *)
+
+Definition previous_ld {G : graph} (D : V G -> Prop) :=
+    forall (v : V G), ~(D v) -> card_ge (cap (No v) D) 1 /\
+    forall (u v : V G), u <> v -> ~(D u) -> ~(D v) -> card_ge (sym (cap (No v) D) (cap (No u) D)) 1.
+Definition previous_redld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ self_distinguishing 2 D.
+Definition previous_detld {G : graph} (D : V G -> Prop) := closed_dominating 2 D /\ sharp_self_distinguishing 2 D.
+Definition previous_errld {G : graph} (D : V G -> Prop) := closed_dominating 3 D /\ self_distinguishing 3 D.
+
+Theorem previous_ld_equiv : forall (G : graph) (D : V G -> Prop), ld D <-> previous_ld D.
+Proof.
+    unfold ld, previous_ld. repeat (split; intros).
+    destruct H as [H _]. destruct (H v) as [x [[H1 H2] _]]. clear H. firstorder. unfold single in H. rewrite H in H0. firstorder.
+    destruct H as [_ H]. destruct (H u v0 H1) as [x [H4 _]]. clear H. firstorder; unfold single in H; [rewrite H in H2 | rewrite H in H3]; firstorder.
+    unfold closed_dominating. intros. remember (H v) as H1. clear HeqH1. clear H. destruct (excl_mid (D v)); firstorder.
+    unfold self_distinguishing. intros. destruct (excl_mid (D u)), (excl_mid (D v)); firstorder. destruct (H v H2) as [_ H3]. clear H. firstorder.
+Qed.

@@ -56,36 +56,29 @@ Proof.
     unfold self_distinguishing. intros. destruct H as [_ H]. destruct (excl_mid (D u)), (excl_mid (D v)); firstorder.
 Qed.
 
-
-(* Theorem previous_redld_equiv : forall (G : graph) (D : V G -> Prop), redld D <-> previous_redld D.
+Theorem orig_redld_equiv : forall (G : graph) (D : V G -> Prop), redld D <-> orig_redld D.
 Proof.
-    unfold redld, previous_redld. repeat (split; intros).
+    unfold redld, orig_redld. repeat (split; intros).
 
     destruct H as [H _]. firstorder.
 
-    destruct H as [_ H]. destruct (H u v0 H0) as [x [[H3 H4] [y [[[H5 H6] H7] _]]]]. clear H.
-    destruct (excl_mid (v0 = x /\ v0 = y)) as [[H8 H9] | H8]. rewrite <- H8 in H7. rewrite <- H9 in H7. firstorder.
-    apply demorgan in H8. destruct H8 as [H8 | H8]; [exists x | exists y]; split; try reflexivity. split; try exact H8.
-    destruct (excl_mid (x = u)) as [H9 | H9]. rewrite H9 in H4. firstorder. destruct H3 as [H3 | [H3 | H3]]; [| apply eq_sym in H3 |]; firstorder.
-    destruct (excl_mid (y = u)) as [H9 | H9]. rewrite H9 in H6. firstorder. destruct H5 as [H5 | [H5 | H5]]; [| apply eq_sym in H5 |]; firstorder.
+    destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] _]]]]. clear H.
+    destruct (excl_mid (v = x /\ v = y)) as [[H8 H9] | H8]. rewrite <- H8 in H7. rewrite <- H9 in H7. firstorder.
+    apply demorgan in H8. destruct H8 as [H8 | H8]; [exists x | exists y]; split; try reflexivity.
+    destruct (excl_mid (x = u)) as [H9 | H9]. rewrite H9 in H4. contradiction. destruct H3 as [H3 | [H3 | H3]]; [| apply eq_sym in H3 |]; firstorder.
+    destruct (excl_mid (y = u)) as [H9 | H9]. rewrite H9 in H6. contradiction. destruct H5 as [H5 | [H5 | H5]]; [| apply eq_sym in H5 |]; firstorder.
 
-    destruct H as [_ H]. destruct (H u0 v1 H3) as [x [[H6 H7] [y [[[H8 H9] H10] _]]]]. clear H.
+    destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] _]]]]. clear H.
     exists x; split; [| exists y; split; try reflexivity].
-    destruct H6 as [[[H61 H62] | [H61 H62]] | [H6 | H6]]; [| | rewrite H6 in H5 | rewrite H6 in H4]; firstorder.
-    destruct H8 as [[[H81 H82] | [H81 H82]] | [H8 | H8]]; [| | rewrite H8 in H5 | rewrite H8 in H4]; firstorder.
+    destruct H3 as [[[H31 H32] | [H31 H32]] | [H3 | H3]]; [| | rewrite H3 in H2 | rewrite H3 in H1]; firstorder.
+    destruct H5 as [[[H51 H52] | [H51 H52]] | [H5 | H5]]; [| | rewrite H5 in H2 | rewrite H5 in H1]; firstorder.
 
-    unfold closed_dominating. intros. destruct (H v) as [H1 _]. clear H. firstorder.
+    destruct H as [H _]. firstorder.
 
-    unfold self_distinguishing, self_distinguished. intros. destruct (H u) as [_ [H2 H2']]. clear H.
-    destruct (excl_mid (D u)) as [Hu | Hu], (excl_mid (D v)) as [Hv | Hv]. firstorder.
-    destruct (H2 v u (not_eq_sym H0) Hu Hv) as [H3 H4]. clear H2. firstorder.
-    destruct (H2 u v H0 Hv Hu) as [H3 H4]. clear H2. firstorder. *)
+    unfold self_distinguishing. intros. destruct (excl_mid (D u)), (excl_mid (D v)).
+    clear H. firstorder.
+    destruct H as [_ [H _]]. destruct (H v u (not_eq_sym H0) H1 H2) as [x [H3 _]]. clear H. firstorder.
+    destruct H as [_ [H _]]. destruct (H u v H0 H2 H1) as [x [H3 _]]. clear H. firstorder.
+    destruct H as [_ [_ H]]. destruct (H u v H0 H2 H1) as [x [H3 [y [H4 _]]]]. clear H. firstorder.
+Qed.
 
-    (* unfold self_distinguishing, self_distinguished. intros. destruct (H u) as [Hd H2]. clear H.
-    destruct (excl_mid (D u)) as [Hu | Hu], (excl_mid (D v)) as [Hv | Hv]. clear Hd. firstorder.
-    destruct (H2 v u (not_eq_sym H0) Hu Hv) as [H3 H4]. clear H2. clear Hd. firstorder.
-    destruct (H2 u v H0 Hv Hu) as [H3 H4]. clear H2. clear Hd. firstorder.
-    
-    destruct Hd as [x [Hd1 [y [Hd2 _]]]].
-    firstorder. *)
-    

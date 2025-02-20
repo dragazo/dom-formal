@@ -1,6 +1,7 @@
 Require Import DomFormal.Graph.
 Require Import DomFormal.Param.
 Require Import DomFormal.Set.
+Require Import DomFormal.Logic.
 
 (* ------------------------------------------------------------------------------------ *)
 
@@ -51,16 +52,12 @@ Proof.
     unfold ld, orig_ld. repeat (split; intros).
     destruct H as [H _]. destruct (H v) as [x [H1 _]]. clear H. firstorder. rewrite H in H0. contradiction.
     destruct H as [_ H]. destruct (H u v H0) as [x [[H4 H5] _]]. firstorder; [rewrite H3 in H1 | rewrite H3 in H2]; contradiction.
-    
-
-    (* unfold ld, previous_ld. repeat (split; intros).
-    destruct H as [H _]. destruct (H v) as [x [[H1 H2] _]]. clear H. firstorder. rewrite H in H0. firstorder.
-    destruct H as [_ H]. destruct (H u v0 H1) as [x [H4 _]]. clear H. firstorder; [rewrite H in H2 | rewrite H in H3]; firstorder.
-    unfold closed_dominating. intros. remember (H v) as H1. clear HeqH1. clear H. destruct (excl_mid (D v)); firstorder.
-    unfold self_distinguishing. intros. destruct (excl_mid (D u)), (excl_mid (D v)); firstorder. destruct (H v H2) as [_ H3]. clear H. firstorder.
+    unfold closed_dominating. intros. destruct H as [H _]. destruct (excl_mid (D v)); firstorder.
+    unfold self_distinguishing. intros. destruct H as [_ H]. destruct (excl_mid (D u)), (excl_mid (D v)); firstorder.
 Qed.
 
-Theorem previous_redld_equiv : forall (G : graph) (D : V G -> Prop), redld D <-> previous_redld D.
+
+(* Theorem previous_redld_equiv : forall (G : graph) (D : V G -> Prop), redld D <-> previous_redld D.
 Proof.
     unfold redld, previous_redld. repeat (split; intros).
 
@@ -83,10 +80,6 @@ Proof.
     destruct (excl_mid (D u)) as [Hu | Hu], (excl_mid (D v)) as [Hv | Hv]. firstorder.
     destruct (H2 v u (not_eq_sym H0) Hu Hv) as [H3 H4]. clear H2. firstorder.
     destruct (H2 u v H0 Hv Hu) as [H3 H4]. clear H2. firstorder. *)
-    
-
-
-    
 
     (* unfold self_distinguishing, self_distinguished. intros. destruct (H u) as [Hd H2]. clear H.
     destruct (excl_mid (D u)) as [Hu | Hu], (excl_mid (D v)) as [Hv | Hv]. clear Hd. firstorder.

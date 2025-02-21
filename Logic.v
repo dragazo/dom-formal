@@ -4,5 +4,8 @@ Axiom prop_ext : forall (P Q : Prop), (P <-> Q) -> P = Q.
 
 (* ------------------------------------------------------------------------------------ *)
 
-Theorem demorgan : forall (p q : Prop), ~(p /\ q) <-> (~p \/ ~q).
+Theorem demorgan_and : forall (p q : Prop), ~(p /\ q) <-> (~p \/ ~q).
+Proof. intros. destruct (excl_mid p), (excl_mid q); firstorder. Qed.
+
+Theorem demorgan_or : forall (p q : Prop), ~(p \/ q) <-> (~p /\ ~q).
 Proof. intros. destruct (excl_mid p), (excl_mid q); firstorder. Qed.

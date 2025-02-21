@@ -44,8 +44,8 @@ Definition orig_detld {G : graph} (D : V G -> Prop) :=
 Definition orig_errld {G : graph} (D : V G -> Prop) :=
     (forall (v : V G), card_ge (cap (Nc v) D) 3) /\
     (forall (u v : V G), u <> v -> D u -> D v -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (cup (single v) (single u))) 1) /\
-    (forall (u v : V G), u <> v -> D u -> D v -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (single u)) 2) /\
-    (forall (u v : V G), u <> v -> D u -> D v -> card_ge (sym (cap (No v) D) (cap (No u) D)) 3).
+    (forall (u v : V G), u <> v -> D u -> ~(D v) -> card_ge (sub (sym (cap (No v) D) (cap (No u) D)) (single u)) 2) /\
+    (forall (u v : V G), u <> v -> ~(D u) -> ~(D v) -> card_ge (sym (cap (No v) D) (cap (No u) D)) 3).
 
 Theorem orig_ld_equiv : forall (G : graph) (D : V G -> Prop), ld D <-> orig_ld D.
 Proof.
@@ -64,7 +64,7 @@ Proof.
 
     destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] _]]]]. clear H.
     destruct (excl_mid (v = x /\ v = y)) as [[H8 H9] | H8]. rewrite <- H8 in H7. rewrite <- H9 in H7. firstorder.
-    apply demorgan in H8. destruct H8 as [H8 | H8]; [exists x | exists y]; split; try reflexivity.
+    apply demorgan_and in H8. destruct H8 as [H8 | H8]; [exists x | exists y]; split; try reflexivity.
     destruct (excl_mid (x = u)) as [H9 | H9]. rewrite H9 in H4. contradiction. destruct H3 as [H3 | [H3 | H3]]; [| apply eq_sym in H3 |]; firstorder.
     destruct (excl_mid (y = u)) as [H9 | H9]. rewrite H9 in H6. contradiction. destruct H5 as [H5 | [H5 | H5]]; [| apply eq_sym in H5 |]; firstorder.
 
@@ -82,3 +82,37 @@ Proof.
     destruct H as [_ [_ H]]. destruct (H u v H0 H2 H1) as [x [H3 [y [H4 _]]]]. clear H. firstorder.
 Qed.
 
+Theorem orig_errld_equiv : forall (G : graph) (D : V G -> Prop), errld D <-> orig_errld D.
+Proof.
+    unfold errld, orig_errld. repeat (split; intros).
+
+    destruct H as [H _]. firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] [z [[[[H8 H9] H10] H11] _]]]]]]. clear H.
+    destruct (excl_mid ((u = x \/ v = x) /\ (u = y \/ v = y) /\ (u = z \/ v = z))) as [H12 | H12].
+    destruct H12 as [[H12 | H12] [[H13 | H13] [H14 | H14]]]; rewrite H12 in *; rewrite H13 in *; rewrite H14 in *; firstorder.
+    apply demorgan_and in H12. destruct H12 as [H12 | H12]; [| apply demorgan_and in H12; destruct H12 as [H12 | H12]];
+    apply demorgan_or in H12; destruct H12 as [H12 H13]; [exists x | exists y | exists z]; firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] [z [[[[H8 H9] H10] H11] _]]]]]]. clear H.
+    destruct (excl_mid (v = x \/ v = y \/ v = z)) as [Hv | Hv]. destruct Hv as [Hv | [Hv | Hv]]; rewrite Hv in *; firstorder.
+    apply demorgan_or in Hv. destruct Hv as [Hvx Hv]. apply demorgan_or in Hv. destruct Hv as [Hvy Hvz].
+    destruct (excl_mid ((u = x \/ u = y) /\ (u = x \/ u = z) /\ (u = y \/ u = z))) as [H12 | H12].
+    destruct H12 as [[H12 | H12] [[H13 | H13] [H14 | H14]]]; rewrite H12 in *; try rewrite H13 in *; try rewrite H14 in *; firstorder.
+    apply demorgan_and in H12. destruct H12 as [H12 | H12]; [| apply demorgan_and in H12; destruct H12 as [H12 | H12]]; apply demorgan_or in H12; destruct H12 as [H12 H13]; firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [x [[H3 H4] [y [[[H5 H6] H7] [z [[[[H8 H9] H10] H11] _]]]]]]. clear H.
+    destruct (excl_mid (u = x \/ u = y \/ u = z)) as [Hu | Hu]. destruct Hu as [Hu | [Hu | Hu]]; rewrite Hu in *; firstorder.
+    destruct (excl_mid (v = x \/ v = y \/ v = z)) as [Hv | Hv]. destruct Hv as [Hv | [Hv | Hv]]; rewrite Hv in *; firstorder.
+    apply demorgan_or in Hu. destruct Hu as [Hux Hu]. apply demorgan_or in Hu. destruct Hu as [Huy Huz].
+    apply demorgan_or in Hv. destruct Hv as [Hvx Hv]. apply demorgan_or in Hv. destruct Hv as [Hvy Hvz].
+    firstorder.
+
+    destruct H as [H _]. firstorder.
+
+    destruct H as [_ [H1 [H2 H3]]]. unfold self_distinguishing. intros. destruct (excl_mid (D u)) as [Du | Du], (excl_mid (D v)) as [Dv | Dv].
+    destruct (H1 u v H Du Dv) as [x [H4 _]]. clear H1. clear H2. clear H3. firstorder.
+    destruct (H2 u v H Du Dv) as [x [[H4 H5] [y [[[H6 H7] H8] _]]]]. clear H1. clear H2. clear H3. firstorder.
+    destruct (H2 v u (not_eq_sym H) Dv Du) as [x [[H4 H5] [y [[[H6 H7] H8] _]]]]. clear H1. clear H2. clear H3. firstorder.
+    destruct (H3 u v H Du Dv) as [x [H4 [y [[H5 H6] [z [[H7 H8] _]]]]]]. clear H1. clear H2. clear H3. firstorder.
+Qed.

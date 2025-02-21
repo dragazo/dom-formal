@@ -82,6 +82,50 @@ Proof.
     destruct H as [_ [_ H]]. destruct (H u v H0 H2 H1) as [x [H3 [y [H4 _]]]]. clear H. firstorder.
 Qed.
 
+Theorem orig_detld_equiv : forall (G : graph) (D : V G -> Prop), detld D <-> orig_detld D.
+Proof.
+    unfold detld, orig_detld. repeat (split; intros).
+
+    destruct H as [H _]. firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [H3 | H3]; clear H; destruct H3 as [x [[H3 H4] [y [[[H5 H6] H7] _]]]];
+    firstorder; rewrite <- H in H7; rewrite <- H3 in H7; firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [H3 | H3]; clear H; destruct H3 as [x [[H3 H4] [y [[[H5 H6] H7] _]]]].
+    firstorder. rewrite <- H in H7. rewrite <- H3 in H7. firstorder.
+    firstorder. rewrite H5 in H2. contradiction. rewrite H in H2. contradiction. rewrite <- H in H7. rewrite <- H3 in H7. firstorder.
+
+    destruct H as [_ H]. destruct (H u v H0) as [H3 | H3]; clear H; destruct H3 as [x [[H3 H4] [y [[[H5 H6] H7] _]]]].
+    firstorder. rewrite H5 in H1. contradiction. rewrite H in H1. contradiction. rewrite H in H1. contradiction.
+    firstorder. rewrite H5 in H2. contradiction. rewrite H in H2. contradiction. rewrite H in H2. contradiction.
+
+    destruct H as [H _]. firstorder.
+
+    destruct H as [_ [H1 [H2 H3]]]. unfold sharp_self_distinguishing. intros.
+    destruct (excl_mid (D u)) as [Du | Du], (excl_mid (D v)) as [Dv | Dv].
+
+    destruct (H1 u v H Du Dv) as [x [H4 _]]. clear H1. clear H2. clear H3.
+    destruct H4 as [[[H4 H5] H6] | [[H4 H5] H6]]; apply demorgan_and in H6; (destruct H6 as [H6 | H6]; [| contradiction]).
+    right. exists v. split. split; [| assumption]. firstorder. exists x. split; [| reflexivity].
+    destruct (excl_mid (v = x)) as [Hvx | Hvx]. rewrite Hvx in H4. destruct (E_nrefl G _ H4). firstorder.
+    left. exists u. split. split; [| assumption]. firstorder. exists x. split; [| reflexivity].
+    destruct (excl_mid (u = x)) as [Hux | Hux]. rewrite Hux in H4. destruct (E_nrefl G _ H4). firstorder.
+
+    destruct (H2 u v H Du Dv) as [[x [[[H4 h5] H6] [y [[[H7 H8] H9] _]]]] | [x [[[H4 h5] H6] _]]]; clear H1; clear H2; clear H3.
+    firstorder. apply demorgan_and in H6. destruct H6 as [H6 | H6]; [| contradiction].
+    left. exists u. split. firstorder. exists x. split; [| reflexivity].
+    destruct (excl_mid (u = x)) as [Hux | Hux]. rewrite Hux in H4. destruct (E_nrefl G _ H4). firstorder.
+
+    destruct (H2 v u (not_eq_sym H) Dv Du) as [[x [[[H4 h5] H6] [y [[[H7 H8] H9] _]]]] | [x [[[H4 h5] H6] _]]]; clear H1; clear H2; clear H3.
+    firstorder. apply demorgan_and in H6. destruct H6 as [H6 | H6]; [| contradiction].
+    right. exists v. split. firstorder. exists x. split; [| reflexivity].
+    destruct (excl_mid (v = x)) as [Hvx | Hvx]. rewrite Hvx in H4. destruct (E_nrefl G _ H4). firstorder.
+
+    destruct (H3 u v H Du Dv) as [[x [[[H4 h5] H6] [y [[[[H7 H8] H9] H10] _]]]] | [x [[[H4 h5] H6] [y [[[[H7 H8] H9] H10] _]]]]];
+    clear H1; clear H2; clear H3; apply demorgan_and in H6; apply demorgan_and in H9;
+    (destruct H6 as [H6 | H6]; [| contradiction]); (destruct H9 as [H9 | H9]; [| contradiction]); firstorder.
+Qed.
+
 Theorem orig_errld_equiv : forall (G : graph) (D : V G -> Prop), errld D <-> orig_errld D.
 Proof.
     unfold errld, orig_errld. repeat (split; intros).
